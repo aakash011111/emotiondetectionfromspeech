@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Recognition</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: white;
+            flex-direction: column;
+        }
+        canvas {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        form {
+            margin-top: 20px;
+        }
+        label, button {
+            font-size: 18px;
+        }
+        input[type="file"] {
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Emotion Recognition from Speech</h1>
+
+    <!-- Login Form -->
+    <div id="loginWindow">
+        <form action="/login" method="post">
+            <label for="username">Username:</label>
+            <input type="text" name="username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" name="password" required><br><br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <!-- Prediction Form (Displayed after login) -->
+    <div id="predictionWindow" style="display: none;">
+        <form action="/prediction" method="post" enctype="multipart/form-data">
+            <label for="audio_file">Choose an audio file:</label>
+            <input type="file" name="audio_file" accept=".wav" required><br><br>
+            <button type="submit">Submit</button>
+        </form>
+
+        {% if predicted_emotion %}
+        <h2>Predicted Emotion: {{ predicted_emotion }}</h2>
+        <canvas id="emotionChart"></canvas>
+        <script>
+            // Ensure the emotion_probabilities are passed as a JSON object from the backend
+            const emotionProbabilities = {{ emotion_probabilities | tojson }};
+            
+            const emotionLabels = Object.keys(emotionProbabilities);
+            const probabilities = Object.values(emotionProbabilities);
+
+            // Create a pie chart using Chart.js
+            new Chart(document.getElementById('emotionChart'), {
+                type: 'pie',
+                data: {
+                    labels: emotionLabels,
+                    datasets: [{
+                        data: probabilities,
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(tooltipItem) {
+                                    return tooltipItem.label + ': ' + tooltipItem.raw.toFixed(2); // Formatting the label
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+        {% endif %}
+    </div>
+
+    <script>
+        // Add logic to show the prediction form after successful login
+        document.querySelector("form[action='/login']").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const username = event.target.username.value;
+            const password = event.target.password.value;
+
+            // Simulate successful login
+            if (username === "user" && password === "password") {
+                document.getElementById("loginWindow").style.display = "none";
+                document.getElementById("predictionWindow").style.display = "block";
+            } else {
+                alert("Invalid credentials. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>

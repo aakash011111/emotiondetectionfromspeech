@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            color: white;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar h2 {
+            color: #FFD700;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            margin: 10px 0;
+            display: block;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+        /* Main content styles */
+        .content {
+            flex-grow: 1;
+            padding: 0;
+            position: relative;
+        }
+
+        #profile-section, #predict-section, #history-section {
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #profile-section {
+            background-color: #282c34;
+            color: white;
+            text-align: center;
+            display: flex; /* Default section */
+        }
+
+        #predict-section {
+            background-image: url('/static/nature.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+        }
+
+        #result {
+            font-size: 1.5em;
+            margin-top: 20px;
+            color: #FFD700;
+        }
+
+        #chartContainer {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .history-table {
+            width: 80%;
+            margin: 20px auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-collapse: collapse;
+        }
+
+        .history-table th, .history-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #555;
+        }
+
+        .history-table th {
+            background-color: #222;
+        }
+
+        .average-container {
+            margin: 20px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #FFD700;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .reset-btn {
+            background-color: #FF0000;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background-color: #CC0000;
+        }
+
+        /* Session History Section with Background Image */
+        #history-section {
+            background-image: url('/static/bg.png'); /* Path to the background image */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white; /* Ensure text is readable */
+            display: none;
+            padding: 20px;
+            overflow-y: auto; /* Enable scrolling if content overflows */
+        }
+
+        /* Logout Button Styles */
+        .logout-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #FF0000;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: #CC0000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Welcome, User</h2>
+        <a href="#profile" id="profile-link">Profile</a>
+        <a href="#predict" id="predict-link">Predict Emotion</a>
+        <a href="#history" id="history-link">Session History</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Logout Button -->
+        <button class="logout-btn" onclick="logout()">Logout</button>
+
+        <!-- Profile Section -->
+        <div id="profile-section">
+            <div>
+                <h1>Your Profile</h1>
+                <p><strong>Username:</strong> {{ username }}</p>
+                <p><strong>Email:</strong> user@example.com</p>
+            </div>
+        </div>
+
+        <!-- Predict Emotion Section -->
+        <div id="predict-section">
+            <div class="container">
+                <h1>Emotion Recognition from Speech</h1>
+                <form id="uploadForm">
+                    <label for="audio_file">Choose an audio file:</label>
+                    <input type="file" id="audio_file" accept=".wav" required><br><br>
+                    <button type="submit">Submit</button>
+                </form>
+                <div id="result"></div>
+                <div id="chartContainer">
+                    <canvas id="emotionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session History Section -->
+        <div id="history-section">
+            <div>
+                <h1>Session History</h1>
+                <table class="history-table" id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Date</th>
+                            <th>Predicted Emotion</th>
+                            <th>Probabilities</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows populated dynamically -->
+                    </tbody>
+                </table>
+                <div class="average-container" id="average-container">
+                    <!-- Average details populated dynamically -->
+                </div>
+                <button class="reset-btn" id="reset-btn">Reset History</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Logout functionality
+        function logout() {
+            alert('Logged out successfully!');
+            window.location.href = '/logout'; // Adjust URL as necessary
+        }
+
+        // Section toggling logic
+        const profileLink = document.getElementById('profile-link');
+        const predictLink = document.getElementById('predict-link');
+        const historyLink = document.getElementById('history-link');
+        const profileSection = document.getElementById('profile-section');
+        const predictSection = document.getElementById('predict-section');
+        const historySection = document.getElementById('history-section');
+        const resetBtn = document.getElementById('reset-btn');
+
+        function showSection(sectionToShow) {
+            profileSection.style.display = 'none';
+            predictSection.style.display = 'none';
+            historySection.style.display = 'none';
+            sectionToShow.style.display = 'flex';
+        }
+
+        profileLink.addEventListener('click', () => showSection(profileSection));
+        predictLink.addEventListener('click', () => showSection(predictSection));
+        historyLink.addEventListener('click', () => {
+            showSection(historySection);
+            loadSessionHistory();
+        });
+
+        const uploadForm = document.getElementById('uploadForm');
+        const resultDiv = document.getElementById('result');
+        const chartContainer = document.getElementById('chartContainer');
+        const ctx = document.getElementById('emotionChart').getContext('2d');
+        let sessionHistory = [];
+        let emotionChart;
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('audio_file');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select an audio file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('audio_file', file);
+
+            try {
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.textContent = `Error: ${data.error}`;
+                    chartContainer.style.display = 'none';
+                } else {
+                    resultDiv.textContent = `Predicted Emotion: ${data.predicted_emotion}`;
+                    chartContainer.style.display = 'block';
+
+                    const emotionLabels = Object.keys(data.emotion_probabilities);
+                    const probabilities = Object.values(data.emotion_probabilities);
+
+                    sessionHistory.push({
+                        date: new Date().toLocaleString(),
+                        emotion: data.predicted_emotion,
+                        probabilities: data.emotion_probabilities,
+                    });
+
+                    if (emotionChart) emotionChart.destroy();
+
+                    emotionChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: emotionLabels,
+                            datasets: [{
+                                label: 'Emotion Probabilities',
+                                data: probabilities,
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                            }],
+                        },
+                        options: {
+                            scales: { y: { beginAtZero: true } },
+                        },
+                    });
+                }
+            } catch (err) {
+                resultDiv.textContent = `Error: ${data.error}`;
+                chartContainer.style.display = 'none';
+            }
+        });
+
+        async function loadSessionHistory() {
+            const historyTable = document.getElementById('history-table').querySelector('tbody');
+            historyTable.innerHTML = '';
+            sessionHistory.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${entry.date}</td>
+                    <td>${entry.emotion}</td>
+                    <td>${JSON.stringify(entry.probabilities)}</td>
+                `;
+                historyTable.appendChild(row);
+            });
+        }
+
+        resetBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset session history?')) {
+                sessionHistory = [];
+                loadSessionHistory();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Results</title>
+</head>
+<body>
+    <h1>Prediction Results</h1>
+    <h2>Predicted Emotion: {{ predicted_emotion }}</h2>
+
+    <h3>Emotion Probabilities:</h3>
+    <ul>
+        {% for emotion, probability in emotion_probabilities.items() %}
+            <li>{{ emotion }}: {{ probability }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>Pie Chart:</h3>
+    <img src="{{ pie_chart_url }}" alt="Pie Chart" style="width: 50%;">
+
+    <h3>Emotion Timeline:</h3>
+    <img src="{{ timeline_chart_url }}" alt="Timeline Chart" style="width: 70%;">
+
+    <a href="{{ url_for('index') }}">Go Back</a>
+</body>
+</html>
